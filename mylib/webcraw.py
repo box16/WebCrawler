@@ -51,8 +51,8 @@ class Website:
 
 
 class Crawler:
-    def __init__(self):
-        self.site = None
+    def __init__(self,site):
+        self.site = site
         self.current_url = None
 
     def get_page(self, url):
@@ -62,6 +62,12 @@ class Crawler:
         except requests.exceptions.RequestException:
             return None
         return BeautifulSoup(req.text, "html.parser")
+
+    def get_domestic_pages(self):
+        links = []
+        for link in bs.find_all("a", href=self.site.dome_char):
+            if "href" in link.attrs:
+                links.append(link.attrs["href"])
 
     def get_next_page(self):
         """current_urlから内部ページへのリンクを一つ抽出し、そのページのBeautifulSopuオブジェクトを返す"""
@@ -90,9 +96,8 @@ class Crawler:
                 content = Content(self.current_url, title, body)
                 content.printing()
 
-    def start_craw(self, site, collect_num):
+    def start_craw(self, collect_num):
         """クロール対象の基点URLから指定数分のWebページをクロールする"""
-        self.site = site
         self.current_url = self.site.domain
         i = 0
         while i < collect_num:
