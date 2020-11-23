@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import random
-
+import datetime
+import json
 
 class Content:
     """Webページの抽出結果としてURL,タイトル、内容を格納するクラス
@@ -19,7 +20,7 @@ class Content:
         print("----------")
         print(f"URL:{self.url}")
         print(f"TITLE:{self.title}")
-        # print(f"BODY:{self.body}")
+        print(f"BODY:{self.body}")
         print("----------")
 
 
@@ -53,11 +54,12 @@ class Website:
 
 class Crawler:
     def __init__(self, site):
-        self.site = site
-        self.current_url = self.site.domain
-        self.domestic_pages = []
+        self._site = site
+        self._current_url = self._site.domain
+        self._domestic_pages = []
+        self._contents = []
 
-    def get_page(self, url):
+    def _get_page(self, url):
         """指定したURLのBeautifulSoupオブジェクトを返す"""
         try:
             req = requests.get(url)
@@ -65,37 +67,52 @@ class Crawler:
             return None
         return BeautifulSoup(req.text, "html.parser")
 
-    def collect_domestic_pages(self, url):
+    def _collect_domestic_pages(self, url):
         """与えられたURLを基点に内部ページを取得する"""
-        bs = self.get_page(url)
-        for link in bs.find_all("a", href=self.site.dome_char):
-            domestic_page = self.site.dome_page(link.attrs["href"])
-            if domestic_page not in self.domestic_pages:
-                self.domestic_pages.append(domestic_page)
+        bs = self._get_page(url)
+        for link in bs.find_all("a", href=self._site.dome_char):
+            domestic_page = self._site.dome_page(link.attrs["href"])
+            if domestic_page not in self._domestic_pages:
+                self._domestic_pages.append(domestic_page)
 
-    def safe_get(self, page_obj, selector):
+    def _safe_get(self, page_obj, selector):
         """CSSコレクタを使って指定のタグの中身を抽出する"""
         selected_elems = page_obj.select(selector)
         if (selected_elems is not None) and (len(selected_elems) > 0):
             return '\n'.join([elem.get_text() for elem in selected_elems])
 
-    def parse(self):
+    def _parse(self):
         """クロールしたWebページをContentオブジェクトとして生成する"""
-        for page in self.domestic_pages:
-            bs = self.get_page(page)
+        for page in self._domestic_pages:
+            bs = self._get_page(page)
             if bs is None:
                 continue
-            title = self.safe_get(bs, self.site.title_tag)
-            body = self.safe_get(bs, self.site.body_tag)
+            title = self._safe_get(bs, self._site.title_tag)
+            body = self._safe_get(bs, self._site.body_tag)
             if title != "" and body != "":
-                content = Content(self.current_url, title, body)
-                content.printing()
+                content = Content(self._current_url, title, body)
+                self._contents.append(content)
 
-    def start_craw(self, deep=10):
+    def write_contents(self):
+        """集めたコンテンツをScrapbox用のJSON形式で書き出す"""
+        pages = []
+        for content in self._contents:
+            dic = {}
+            dic["title"] = content.title#titleが改行始まりの時あるからこれを整形する
+            dic["lines"] = content.body.splitlines() + [content.url]#bodyが空の時がある?Exception対象,改行が複数続く場合は一つだけにする
+            pages.append(dic)
+        
+        result = {"pages" : pages}
+        file_name = "./result_json/" + self._site.name + str(datetime.date.today()) + ".json"
+        with open(file_name,"w") as f:
+            json.dump(result,f,indent=4,ensure_ascii=False)
+        print("file done")
+
+    def start_craw(self, deep=2):
         """クロール対象の基点URLから指定回数分内部ページをコレクトする"""
         i = 0
         while i < deep:
-            self.collect_domestic_pages(self.current_url)
-            self.current_url = random.choice(self.domestic_pages)
+            self._collect_domestic_pages(self._current_url)
+            self._current_url = random.choice(self._domestic_pages)
             i += 1
-        self.parse()
+        self._parse()

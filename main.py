@@ -5,4 +5,7 @@ if __name__ == "__main__":
     web_sites = website_define.web_sites
     for site in web_sites:
         _website = webcraw.Website(**site)
-        webcraw.Crawler(_website).start_craw()
+        crawler = webcraw.Crawler(_website)
+        crawler.start_craw()
+        crawler.write_contents()
+        del(crawler)
