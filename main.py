@@ -20,7 +20,7 @@ class Content:
         print("----------")
         print(f"URL:{self.url}")
         print(f"TITLE:{self.title}")
-        #print(f"BODY:{self.body}")
+        # print(f"BODY:{self.body}")
         print("----------")
 
 
@@ -28,29 +28,36 @@ class Website:
     """クローリングのための情報を格納するクラス
 
     クローリングのために必要な情報を指定して格納する
-    name        クロール対象のWebサイト名
-    domain      クロール対象のWebサイトの基点となるURL
-    titleTag    クロール対象に特有のページタイトルを抽出するためのCSSコレクタ
-    bodyTag     クロール対象に特有の内容を抽出するためのCSSコレクタ
-    domeChar    クロール対象の内部ページへのリンクを抽出するための正規表現オブジェクト
-    domePage    クロール対象の内部ページへのリンクを作成するためのラムダ式
+    name         クロール対象のWebサイト名
+    domain       クロール対象のWebサイトの基点となるURL
+    title_tag    クロール対象に特有のページタイトルを抽出するためのCSSコレクタ
+    body_tag     クロール対象に特有の内容を抽出するためのCSSコレクタ
+    dome_char    クロール対象の内部ページへのリンクを抽出するための正規表現オブジェクト
+    dome_page    クロール対象の内部ページへのリンクを作成するためのラムダ式
     """
 
-    def __init__(self, name, domain, titleTag, bodyTag, domeChar, domePage):
+    def __init__(
+            self,
+            name,
+            domain,
+            title_tag,
+            body_tag,
+            dome_char,
+            dome_page):
         self.name = name
         self.domain = domain
-        self.titleTag = titleTag
-        self.bodyTag = bodyTag
-        self.domeChar = domeChar
-        self.domePage = domePage
+        self.title_tag = title_tag
+        self.body_tag = body_tag
+        self.dome_char = dome_char
+        self.dome_page = dome_page
 
 
 class Crawler:
     def __init__(self):
         self.site = None
-        self.currentURL = None
+        self.current_url = None
 
-    def getPage(self, url):
+    def get_page(self, url):
         """指定したURLのBeautifulSoupオブジェクトを返す"""
         try:
             req = requests.get(url)
@@ -58,63 +65,60 @@ class Crawler:
             return None
         return BeautifulSoup(req.text, "html.parser")
 
-    def getNextPage(self):
-        """currentURLから内部ページへのリンクを一つ抽出し、そのページのBeautifulSopuオブジェクトを返す"""
-        bs = self.getPage(self.currentURL)
+    def get_next_page(self):
+        """current_urlから内部ページへのリンクを一つ抽出し、そのページのBeautifulSopuオブジェクトを返す"""
+        bs = self.get_page(self.current_url)
         links = []
-        for link in bs.find_all("a", href=self.site.domeChar):
+        for link in bs.find_all("a", href=self.site.dome_char):
             if "href" in link.attrs:
                 links.append(link.attrs["href"])
-        NextPageURL = self.site.domePage(random.choice(links))
-        self.currentURL = NextPageURL
-        return self.getPage(NextPageURL)
+        next_page_url = self.site.dome_page(random.choice(links))
+        self.current_url = next_page_url
+        return self.get_page(next_page_url)
 
-    def safeGet(self, pageObj, selector):
+    def safe_get(self, page_obj, selector):
         """CSSコレクタを使って指定のタグの中身を抽出する"""
-        selectedElems = pageObj.select(selector)
-        if (selectedElems is not None) and (len(selectedElems) > 0):
-            return '\n'.join([elem.get_text() for elem in selectedElems])
+        selected_elems = page_obj.select(selector)
+        if (selected_elems is not None) and (len(selected_elems) > 0):
+            return '\n'.join([elem.get_text() for elem in selected_elems])
 
     def parse(self):
         """クロールしたWebページをContentオブジェクトとして生成する"""
-        bs = self.getNextPage()
+        bs = self.get_next_page()
         if bs is not None:
-            title = self.safeGet(bs, self.site.titleTag)
-            body = self.safeGet(bs, self.site.bodyTag)
+            title = self.safe_get(bs, self.site.title_tag)
+            body = self.safe_get(bs, self.site.body_tag)
             if title != "" and body != "":
-                content = Content(self.currentURL, title, body)
+                content = Content(self.current_url, title, body)
                 content.printing()
 
-    def startCraw(self, site, collectNum):
+    def start_craw(self, site, collect_num):
         """クロール対象の基点URLから指定数分のWebページをクロールする"""
         self.site = site
-        self.currentURL = self.site.domain
+        self.current_url = self.site.domain
         i = 0
-        while i < collectNum:
+        while i < collect_num:
             self.parse()
             i += 1
 
 
 if __name__ == "__main__":
-    web_site_info = [
-        {
-            "name": "LifeHacker",
-            "domain": "https://www.lifehacker.jp/",
-            "titleTag": "[class='lh-entryDetail-header'] h1",
-            "bodyTag": "[id='realEntryBody'] p",
-            "domeChar": re.compile("^(/20)"),
-            "domePage": lambda domesticURL: "https://www.lifehacker.jp/" +
-            domesticURL,
-        },
-        {
-            "name": "PaleolithicMan",
-            "domain": "https://yuchrszk.blogspot.com/",
-            "titleTag": "[class='post-title single-title emfont']",
-            "bodyTag": "[class='post-single-body post-body'] p",
-            "domeChar": re.compile("^(?=https://yuchrszk.blogspot.com/..../.+?)(?!.*archive)(?!.*label).*$"),
-            "domePage": lambda domesticURL: domesticURL,
-        },
-    ]
-    LifeHacker = Website(**web_site_info[1])
+    web_sites = [{"name": "LifeHacker",
+                  "domain": "https://www.lifehacker.jp/",
+                  "title_tag": "[class='lh-entryDetail-header'] h1",
+                  "body_tag": "[id='realEntryBody'] p",
+                  "dome_char": re.compile("^(/20)"),
+                  "dome_page": lambda domestic_url: "https://www.lifehacker.jp/" + domestic_url,
+                  },
+                 {"name": "PaleolithicMan",
+                  "domain": "https://yuchrszk.blogspot.com/",
+                  "title_tag": "[class='post-title single-title emfont']",
+                  "body_tag": "[class='post-single-body post-body'] p",
+                  "dome_char": re.compile("""^(?=https://yuchrszk.blogspot.com/..../.+?)(?!.*archive)(?!.*label).*$"""),
+                  "dome_page": lambda domestic_url: domestic_url,
+                  },
+                 ]
 
-    Crawler().startCraw(LifeHacker, 10)
+    for site in web_sites:
+        _website = Website(**site)
+        Crawler().start_craw(_website, 10)
