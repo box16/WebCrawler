@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import random
 
+
 class Content:
     """Webページの抽出結果としてURL,タイトル、内容を格納するクラス
 
@@ -51,7 +52,7 @@ class Website:
 
 
 class Crawler:
-    def __init__(self,site):
+    def __init__(self, site):
         self.site = site
         self.current_url = self.site.domain
         self.domestic_pages = []
@@ -64,7 +65,7 @@ class Crawler:
             return None
         return BeautifulSoup(req.text, "html.parser")
 
-    def collect_domestic_pages(self,url):
+    def collect_domestic_pages(self, url):
         """与えられたURLを基点に内部ページを取得する"""
         bs = self.get_page(url)
         for link in bs.find_all("a", href=self.site.dome_char):
@@ -82,12 +83,12 @@ class Crawler:
         """クロールしたWebページをContentオブジェクトとして生成する"""
         for page in self.domestic_pages:
             bs = self.get_page(page)
-            if bs is  None:
+            if bs is None:
                 continue
             title = self.safe_get(bs, self.site.title_tag)
             body = self.safe_get(bs, self.site.body_tag)
             if title != "" and body != "":
-                content = Content(self.current_url, title, "")
+                content = Content(self.current_url, title, body)
                 content.printing()
 
     def start_craw(self, deep=10):
