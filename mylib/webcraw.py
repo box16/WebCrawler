@@ -54,6 +54,7 @@ class Crawler:
     def __init__(self,site):
         self.site = site
         self.current_url = None
+        self.domestic_pages = []
 
     def get_page(self, url):
         """指定したURLのBeautifulSoupオブジェクトを返す"""
@@ -63,22 +64,16 @@ class Crawler:
             return None
         return BeautifulSoup(req.text, "html.parser")
 
-    def get_domestic_pages(self):
-        links = []
-        for link in bs.find_all("a", href=self.site.dome_char):
-            if "href" in link.attrs:
-                links.append(link.attrs["href"])
-
-    def get_next_page(self):
-        """current_urlから内部ページへのリンクを一つ抽出し、そのページのBeautifulSopuオブジェクトを返す"""
-        bs = self.get_page(self.current_url)
-        links = []
-        for link in bs.find_all("a", href=self.site.dome_char):
-            if "href" in link.attrs:
-                links.append(link.attrs["href"])
-        next_page_url = self.site.dome_page(random.choice(links))
-        self.current_url = next_page_url
-        return self.get_page(next_page_url)
+    def collect_domestic_pages(self,deep=10):
+        i = 0
+        while i < deep:
+            bs = self.get_page(self.current_url)
+            for link in bs.find_all("a", href=self.site.dome_char):
+                domestic_page = self.site.dome_page(link.attrs["href"])
+                if domestic_page not in self.domestic_pages:
+                    self.domestic_pages.append(domestic_page)
+            self.current_url = random.choice(self.domestic_pages)
+            i += 1
 
     def safe_get(self, page_obj, selector):
         """CSSコレクタを使って指定のタグの中身を抽出する"""
@@ -88,18 +83,18 @@ class Crawler:
 
     def parse(self):
         """クロールしたWebページをContentオブジェクトとして生成する"""
-        bs = self.get_next_page()
-        if bs is not None:
-            title = self.safe_get(bs, self.site.title_tag)
-            body = self.safe_get(bs, self.site.body_tag)
-            if title != "" and body != "":
-                content = Content(self.current_url, title, body)
-                content.printing()
+        for page in self.domestic_pages:
+            bs = self.get_page(page)
+            if bs is not None:
+                title = self.safe_get(bs, self.site.title_tag)
+                body = self.safe_get(bs, self.site.body_tag)
+                if title != "" and body != "":
+                    content = Content(self.current_url, title, "")
+                    content.printing()
 
-    def start_craw(self, collect_num):
+    def start_craw(self, deep=10):
         """クロール対象の基点URLから指定数分のWebページをクロールする"""
         self.current_url = self.site.domain
-        i = 0
-        while i < collect_num:
-            self.parse()
-            i += 1
+        self.collect_domestic_pages(deep)
+        print(len(self.domestic_pages))
+        self.parse()
