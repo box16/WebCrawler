@@ -18,9 +18,9 @@ class Content:
     def printing(self):
         """保存されているWebページ情報を表示する"""
         print("----------")
-        # print(f"URL:{self.url}")
+        print(f"URL:{self.url}")
         print(f"TITLE:{self.title}")
-        # print(f"BODY:{self.body}")
+        #print(f"BODY:{self.body}")
         print("----------")
 
 
@@ -106,7 +106,15 @@ if __name__ == "__main__":
             "domePage": lambda domesticURL: "https://www.lifehacker.jp/" +
             domesticURL,
         },
+        {
+            "name": "PaleolithicMan",
+            "domain": "https://yuchrszk.blogspot.com/",
+            "titleTag": "[class='post-title single-title emfont']",
+            "bodyTag": "[class='post-single-body post-body'] p",
+            "domeChar": re.compile("^(?=https://yuchrszk.blogspot.com/..../.+?)(?!.*archive)(?!.*label).*$"),
+            "domePage": lambda domesticURL: domesticURL,
+        },
     ]
-    LifeHacker = Website(**web_site_info[0])
+    LifeHacker = Website(**web_site_info[1])
 
     Crawler().startCraw(LifeHacker, 10)
