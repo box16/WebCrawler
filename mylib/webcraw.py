@@ -53,9 +53,9 @@ class Website:
 
 
 class Crawler:
-    def __init__(self, site):
-        self._site = site
-        self._current_url = self._site.domain
+    def __init__(self):
+        self._site = None
+        self._current_url = None
         self._domestic_pages = []
         self._contents = []
 
@@ -90,29 +90,24 @@ class Crawler:
             title = self._safe_get(bs, self._site.title_tag)
             body = self._safe_get(bs, self._site.body_tag)
             if title != "" and body != "":
-                content = Content(self._current_url, title, body)
+                content = Content(page, title, body)
                 self._contents.append(content)
 
-    def write_contents(self):
-        """集めたコンテンツをScrapbox用のJSON形式で書き出す"""
-        pages = []
-        for content in self._contents:
-            dic = {}
-            dic["title"] = content.title#titleが改行始まりの時あるからこれを整形する
-            dic["lines"] = content.body.splitlines() + [content.url]#bodyが空の時がある?Exception対象,改行が複数続く場合は一つだけにする
-            pages.append(dic)
-        
-        result = {"pages" : pages}
-        file_name = "./result_json/" + self._site.name + str(datetime.date.today()) + ".json"
-        with open(file_name,"w") as f:
-            json.dump(result,f,indent=4,ensure_ascii=False)
-        print("file done")
+    def _initialize(self,site : Website) -> None:
+        """CrawlするWebサイトをセット、リセットする"""
+        self._site = site
+        self._current_url = None if (site == None) else site.domain
+        self._domestic_pages = []
 
-    def start_craw(self, deep=2):
+    def export_contents(self):
+        return self._contents
+
+    def start_craw(self, site : Website, deep : int=2) -> None:
         """クロール対象の基点URLから指定回数分内部ページをコレクトする"""
-        i = 0
-        while i < deep:
+        self._initialize(site)
+        for trial in range(deep):
             self._collect_domestic_pages(self._current_url)
             self._current_url = random.choice(self._domestic_pages)
-            i += 1
+            print(f"{trial}/{deep}")
         self._parse()
+        self._initialize(None)
