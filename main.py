@@ -1,4 +1,5 @@
 from mylib import webcraw
+from mylib import db_access
 from define import website_define
 
 if __name__ == "__main__":
@@ -7,3 +8,6 @@ if __name__ == "__main__":
     for site in web_sites:
         _website = webcraw.Website(**site)
         crawler.start_craw(_website)
+    
+    db = db_access.DBAccess()
+    db.temporary_write(crawler.export_contents())
