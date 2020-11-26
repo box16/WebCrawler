@@ -3,6 +3,9 @@
 Crawler "*" o-- "*" Website
 Crawler "1" *-- "*" Content
 
+Main -- Crawler
+Main -- DBAccess
+
 DBAccess "1" o-- "1" FileWiter
 DBAccess "1" *-- "1" Shaper
 @enduml
