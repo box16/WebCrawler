@@ -10,4 +10,8 @@ if __name__ == "__main__":
         crawler.start_craw(_website)
     
     db = db_access.DBAccess()
-    db.temporary_write(crawler.export_contents())
+    for content in crawler.export_contents():
+        db.add_row(content.url,
+                   content.title,
+                   content.body)
+    db.temporary_write()
