@@ -6,15 +6,6 @@ import json
 from .db_access import DBAccess
 
 
-class Content:
-    """Webページの抽出結果としてURL,タイトル、内容を格納するクラス"""
-
-    def __init__(self, url, title, body):
-        self.url = url
-        self.title = title
-        self.body = body
-
-
 class Website:
     """クローリングのための情報を格納するクラス
 
@@ -48,7 +39,6 @@ class Crawler:
         self._current_url = None
         self._db_access = DBAccess()
         self._domestic_pages = []
-        self._contents = []
 
     def _get_page(self, url):
         """指定したURLのBeautifulSoupオブジェクトを返す"""
@@ -60,17 +50,16 @@ class Crawler:
 
     def _collect_domestic_pages(self, url):
         """与えられたURLを基点に内部ページを取得する"""
-
         bs = self._get_page(url)
         if not bs:
             return
-
         for link in bs.find_all("a", href=self._site.dome_char):
             if not link.attrs["href"]:
                 continue
             domestic_page = self._site.dome_page(link.attrs["href"])
-            if self._db_access.check_dueto_insert(domestic_page):
-                self._domestic_pages.append(domestic_page)
+            if domestic_page in self._domestic_pages:
+                continue
+            self._domestic_pages.append(domestic_page)
 
     def _safe_get(self, page_obj, selector):
         """CSSコレクタを使って指定のタグの中身を抽出する"""
@@ -78,26 +67,24 @@ class Crawler:
         if (selected_elems is not None) and (len(selected_elems) > 0):
             return '\n'.join([elem.get_text() for elem in selected_elems])
 
-    def _parse(self):
+    def _scrap(self):
         """クロールしたWebページをContentオブジェクトとして生成する"""
         for page in self._domestic_pages:
             bs = self._get_page(page)
             if bs is None:
                 continue
+            if self._db_access.check_dueto_insert(page) == False:
+                continue
             title = self._safe_get(bs, self._site.title_tag)
             body = self._safe_get(bs, self._site.body_tag)
             if title != "" and body != "":
-                content = Content(page, title, body)
-                self._contents.append(content)
+                self._db_access.add_row(page, title, body)
 
     def _initialize(self, site: Website) -> None:
         """CrawlするWebサイトをセット、リセットする"""
         self._site = site
         self._current_url = None if (site is None) else site.domain
         self._domestic_pages = []
-
-    def export_contents(self):
-        return self._contents
 
     def start_craw(self, site: Website, deep: int = 10) -> None:
         """クロール対象の基点URLから指定回数分内部ページをコレクトする"""
@@ -114,5 +101,5 @@ class Crawler:
             if not self._domestic_pages:
                 continue
             self._current_url = random.choice(self._domestic_pages)
-        self._parse()
+        self._scrap()
         self._initialize(None)
