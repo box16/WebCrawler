@@ -14,4 +14,3 @@ if __name__ == "__main__":
         db.add_row(content.url,
                    content.title,
                    content.body)
-    db.temporary_write()

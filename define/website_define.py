@@ -6,8 +6,8 @@ web_sites = [{"name": "LifeHacker",
               "body_tag": "[id='realEntryBody'] p",
               "dome_char": re.compile("^(/20)"),
               "dome_page": lambda domestic_url: "https://www.lifehacker.jp/" + domestic_url,
-              },
-             {"name": "PaleolithicMan",
+              }, ]
+"""             {"name": "PaleolithicMan",
               "domain": "https://yuchrszk.blogspot.com/",
               "title_tag": "[class='post-title single-title emfont']",
               "body_tag": "[class='post-single-body post-body']",
@@ -22,3 +22,4 @@ web_sites = [{"name": "LifeHacker",
               "dome_page": lambda domestic_url: domestic_url,
               },
              ]
+"""
