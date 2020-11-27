@@ -6,35 +6,23 @@ import json
 
 
 class Content:
-    """Webページの抽出結果としてURL,タイトル、内容を格納するクラス
-
-    このクラスに保存された内容がファイルやデータベースに保存される
-    """
+    """Webページの抽出結果としてURL,タイトル、内容を格納するクラス"""
 
     def __init__(self, url, title, body):
         self.url = url
         self.title = title
         self.body = body
 
-    def printing(self):
-        """保存されているWebページ情報を表示する"""
-        print("----------")
-        print(f"URL:{self.url}")
-        print(f"TITLE:{self.title}")
-        print(f"BODY:{self.body}")
-        print("----------")
-
 
 class Website:
     """クローリングのための情報を格納するクラス
 
-    クローリングのために必要な情報を指定して格納する
-    name         クロール対象のWebサイト名
-    domain       クロール対象のWebサイトの基点となるURL
-    title_tag    クロール対象に特有のページタイトルを抽出するためのCSSコレクタ
-    body_tag     クロール対象に特有の内容を抽出するためのCSSコレクタ
-    dome_char    クロール対象の内部ページへのリンクを抽出するための正規表現オブジェクト
-    dome_page    クロール対象の内部ページへのリンクを作成するためのラムダ式
+    name         クロール対象のWebサイト名\n
+    domain       クロール対象のWebサイトの基点となるURL\n
+    title_tag    クロール対象に特有のページタイトルを抽出するためのCSSコレクタ\n
+    body_tag     クロール対象に特有の内容を抽出するためのCSSコレクタ\n
+    dome_char    クロール対象の内部ページへのリンクを抽出するための正規表現オブジェクト\n
+    dome_page    クロール対象の内部ページへのリンクを作成するためのラムダ式\n
     """
 
     def __init__(
