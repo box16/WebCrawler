@@ -4,6 +4,7 @@ import random
 import datetime
 import json
 
+
 class Content:
     """Webページの抽出結果としてURL,タイトル、内容を格納するクラス
 
@@ -69,11 +70,11 @@ class Crawler:
 
     def _collect_domestic_pages(self, url):
         """与えられたURLを基点に内部ページを取得する"""
-        
+
         bs = self._get_page(url)
         if not bs:
             return
-        
+
         for link in bs.find_all("a", href=self._site.dome_char):
             if not link.attrs["href"]:
                 continue
@@ -99,23 +100,23 @@ class Crawler:
                 content = Content(page, title, body)
                 self._contents.append(content)
 
-    def _initialize(self,site : Website) -> None:
+    def _initialize(self, site: Website) -> None:
         """CrawlするWebサイトをセット、リセットする"""
         self._site = site
-        self._current_url = None if (site == None) else site.domain
+        self._current_url = None if (site is None) else site.domain
         self._domestic_pages = []
 
     def export_contents(self):
         return self._contents
 
-    def start_craw(self, site : Website, deep : int=10) -> None:
+    def start_craw(self, site: Website, deep: int = 10) -> None:
         """クロール対象の基点URLから指定回数分内部ページをコレクトする"""
-        
+
         assert str(type(site)) == "<class 'mylib.webcraw.Website'>"
         if (deep <= 0) or (deep >= 100):
             print("探索数が異常値のため、10回に修正します")
             deep = 10
-        
+
         self._initialize(site)
         for trial in range(deep):
             print(f"{trial}/{deep}")
