@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import random
 import datetime
 import json
+from .db_access import DBAccess
 
 
 class Content:
@@ -45,6 +46,7 @@ class Crawler:
     def __init__(self):
         self._site = None
         self._current_url = None
+        self._db_access = DBAccess()
         self._domestic_pages = []
         self._contents = []
 
@@ -67,7 +69,7 @@ class Crawler:
             if not link.attrs["href"]:
                 continue
             domestic_page = self._site.dome_page(link.attrs["href"])
-            if domestic_page not in self._domestic_pages:
+            if self._db_access.check_dueto_insert(domestic_page):
                 self._domestic_pages.append(domestic_page)
 
     def _safe_get(self, page_obj, selector):

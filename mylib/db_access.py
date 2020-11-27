@@ -30,6 +30,7 @@ class DBAccess:
             cursor.execute(
                 f"INSERT INTO pages (url,title,body) VALUES ('{url}','{title}','{body}');")
             self._connection.commit()
+            print(f"add {title}")
 
     def check_dueto_insert(self, url):
         """urlからデータベースにデータを挿入可能か調べる
