@@ -69,8 +69,14 @@ class Crawler:
 
     def _collect_domestic_pages(self, url):
         """与えられたURLを基点に内部ページを取得する"""
+        
         bs = self._get_page(url)
+        if not bs:
+            return
+        
         for link in bs.find_all("a", href=self._site.dome_char):
+            if not link.attrs["href"]:
+                continue
             domestic_page = self._site.dome_page(link.attrs["href"])
             if domestic_page not in self._domestic_pages:
                 self._domestic_pages.append(domestic_page)
@@ -114,7 +120,7 @@ class Crawler:
         for trial in range(deep):
             print(f"{trial}/{deep}")
             self._collect_domestic_pages(self._current_url)
-            if not self._domestic_pages:# コレクト出来たページがない場合
+            if not self._domestic_pages:
                 continue
             self._current_url = random.choice(self._domestic_pages)
         self._parse()
