@@ -108,7 +108,7 @@ class Crawler:
     def export_contents(self):
         return self._contents
 
-    def start_craw(self, site : Website, deep : int=2) -> None:
+    def start_craw(self, site : Website, deep : int=10) -> None:
         """クロール対象の基点URLから指定回数分内部ページをコレクトする"""
         
         assert str(type(site)) == "<class 'mylib.webcraw.Website'>"
