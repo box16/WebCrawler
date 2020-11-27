@@ -7,7 +7,7 @@ if __name__ == "__main__":
     crawler = webcraw.Crawler()
     for site in web_sites:
         _website = webcraw.Website(**site)
-        crawler.start_craw(_website, 1)
+        crawler.start_craw(_website)
 
     db = db_access.DBAccess()
     for content in crawler.export_contents():

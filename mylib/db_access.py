@@ -29,11 +29,14 @@ class DBAccess:
         self._formatter = Formatter()
 
     def add_row(self, url, title, body):
-        dic = {"title": self._formatter.title_format(title),
-               "body": self._formatter.body_format(body),
-               "url": url,
-               }
-        self._out_data.append(dic)
+        try:
+            dic = {"title": self._formatter.title_format(title),
+                   "body": self._formatter.body_format(body),
+                   "url": url,
+                   }
+            self._out_data.append(dic)
+        except BaseException:
+            print(f"url:{url}\ntitle:{title}\nbody:{body}")
 
     def temporary_write(self) -> None:
         file_name = "./result_file/" + str(date.today()) + ".json"
