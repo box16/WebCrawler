@@ -9,11 +9,23 @@ class KeyWordCollector():
         path = os.environ.get("MECABDIC")
         self._mecab_dic = MeCab.Tagger(f'--unk-feature "unknown" -d {path}')
 
-    def collect_keyword(self, text):
-        """渡した文字列から特徴的な名詞を抽出する"""
+    def analyze_morphological(self, text):
+        node = self._prepare_analyze(text)
+        result = []
+        while node:
+            result.append(node.surface)
+            node = node.next
+        return result
+
+    def _prepare_analyze(self, text):
         self._mecab_dic.parse("")
         text = self._text_cleaner(text)
         node = self._mecab_dic.parseToNode(text)
+        return node
+
+    def collect_keyword(self, text):
+        """渡した文字列から特徴的な名詞を抽出する"""
+        node = self._prepare_analyze(text)
 
         result_nouns = []
         while node:

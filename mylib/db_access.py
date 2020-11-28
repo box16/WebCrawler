@@ -101,6 +101,19 @@ class DBAccess:
                 offset += period
                 is_unfinished = offset < pages_num
 
+    def get_all_pages_data(self):
+        with self._connection.cursor() as cursor:
+            cursor.execute("SELECT object_id,body FROM pages;")
+            result = cursor.fetchall()
+            return result
+
+    def get_title(self, object_id):
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT title FROM pages WHERE object_id={object_id};")
+            result = cursor.fetchone()
+            return result[0]
+
     def _write_pages_SBJson(self, data, filename):
         """DBの情報を500個ずつSB用のJson形式で出力する(関数分割)"""
         pages = []
