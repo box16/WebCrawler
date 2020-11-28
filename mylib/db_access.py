@@ -75,23 +75,23 @@ class DBAccess:
         return text
 
     def update_keyword(self):
+        """keyword列がNULLの物を更新する"""
         with self._connection.cursor() as cursor:
             cursor.execute(
                 "SELECT object_id,body FROM pages WHERE keyword IS NULL;")
-            result = cursor.fetchall()
-            for res in result:
-                keywords = self._key_collector.collect_keyword(res[1])
+            results = cursor.fetchall()
+            for result in results:
+                keywords = self._key_collector.collect_keyword(result[1])
                 cursor.execute(
-                    f"UPDATE pages SET keyword = '{keywords}' WHERE object_id={res[0]};")
+                    f"UPDATE pages SET keyword = '{keywords}' WHERE object_id={result[0]};")
                 self._connection.commit()
 
     def write_pages_SBJson(self):
+        """DBの情報を500個ずつSB用のJson形式で出力する"""
         with self._connection.cursor() as cursor:
             cursor.execute("SELECT count(*) FROM pages;")
             pages_num = cursor.fetchone()[0]
-            is_unfinished = True
-            offset = 0
-            period = 500
+            is_unfinished, offset, period = True, 0, 500
             while is_unfinished:
                 cursor.execute(
                     f"SELECT title,body,url,keyword FROM pages LIMIT {period} OFFSET {offset};")
@@ -102,6 +102,7 @@ class DBAccess:
                 is_unfinished = offset < pages_num
 
     def _write_pages_SBJson(self, data, filename):
+        """DBの情報を500個ずつSB用のJson形式で出力する(関数分割)"""
         pages = []
         for page in data:
             keywords = page[3].split("\n")

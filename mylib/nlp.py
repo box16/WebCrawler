@@ -12,7 +12,6 @@ class KeyWordCollector():
     def collect_keyword(self, text):
         self._mecab_dic.parse("")
         text = self._text_cleaner(text)
-
         node = self._mecab_dic.parseToNode(text)
 
         result_nouns = []
@@ -23,7 +22,6 @@ class KeyWordCollector():
 
         result_nouns = list(set(result_nouns))
         result_text = ""
-
         for noun in result_nouns:
             result_text += noun + "\n"
         return result_text
