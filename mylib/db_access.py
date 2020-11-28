@@ -84,3 +84,36 @@ class DBAccess:
                 cursor.execute(
                     f"UPDATE pages SET keyword = '{keywords}' WHERE object_id={res[0]};")
                 self._connection.commit()
+
+    def write_pages_SBJson(self):
+        with self._connection.cursor() as cursor:
+            cursor.execute("SELECT count(*) FROM pages;")
+            pages_num = cursor.fetchone()[0]
+            is_unfinished = True
+            offset = 0
+            period = 500
+            while is_unfinished:
+                cursor.execute(
+                    f"SELECT title,body,url,keyword FROM pages LIMIT {period} OFFSET {offset};")
+                filename = "./result_file/" + \
+                    str(date.today()) + "_" + str(offset) + ".json"
+                self._write_pages_SBJson(cursor.fetchall(), filename)
+                offset += period
+                is_unfinished = offset < pages_num
+
+    def _write_pages_SBJson(self, data, filename):
+        pages = []
+        for page in data:
+            keywords = page[3].split("\n")
+            link = ""
+            for key in keywords:
+                if key:
+                    link += "#" + re.sub(r"\s", "_", key) + " "
+            dic = {"title": page[0],
+                   "lines": [page[0]] + page[1].split("\n") + [page[2], link],
+                   }
+            pages.append(dic)
+        outdic = {"pages": pages}
+
+        with open(filename, "w") as f:
+            json.dump(outdic, f, indent=4, ensure_ascii=False)

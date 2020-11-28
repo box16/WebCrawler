@@ -25,7 +25,7 @@ class KeyWordCollector():
         result_text = ""
 
         for noun in result_nouns:
-            result_text += noun + " "
+            result_text += noun + "\n"
         return result_text
 
     def _is_legal(self, node):
