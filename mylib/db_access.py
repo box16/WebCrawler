@@ -35,8 +35,7 @@ class DBAccess:
             print(f"add {title}")
 
     def check_dueto_insert(self, url):
-        """urlからデータベースにデータを挿入可能か調べる
-        """
+        """urlからデータベースにデータを挿入可能か調べる"""
         with self._connection.cursor() as cursor:
             cursor.execute(f"SELECT url FROM pages WHERE url='{url}';")
             result = cursor.fetchall()
