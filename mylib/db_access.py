@@ -3,11 +3,13 @@ import json
 import re
 import os
 import psycopg2
+from .nlp import KeyWordCollector
 
 
 class DBAccess:
     def __init__(self):
         self._get_connection()
+        self._key_collector = KeyWordCollector()
 
     def _get_connection(self):
         """DBへのコネクションを確立する"""
@@ -28,7 +30,7 @@ class DBAccess:
             title = self._title_format(title)
             body = self._body_format(body)
             cursor.execute(
-                f"INSERT INTO pages (url,title,body) VALUES ('{url}','{title}','{body}');")
+                f"INSERT INTO pages (object_id,url,title,body) VALUES (nextval('object_id_seq'),'{url}','{title}','{body}');")
             self._connection.commit()
             print(f"add {title}")
 
@@ -71,3 +73,14 @@ class DBAccess:
         """SQL用にシングルクォートを半角スペースにする"""
         text = re.sub(r"\'", " ", text)
         return text
+
+    def update_keyword(self):
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT object_id,body FROM pages WHERE keyword IS NULL;")
+            result = cursor.fetchall()
+            for res in result:
+                keywords = self._key_collector.collect_keyword(res[1])
+                cursor.execute(
+                    f"UPDATE pages SET keyword = '{keywords}' WHERE object_id={res[0]};")
+                self._connection.commit()
