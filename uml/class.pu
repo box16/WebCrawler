@@ -1,11 +1,8 @@
 @startuml
 
-Crawler "*" o-- "*" Website
-Crawler "1" *-- "*" Content
-
-Main -- Crawler
-Main -- DBAccess
-
-DBAccess "1" o-- "1" FileWiter
-DBAccess "1" *-- "1" Shaper
+Crawler "0..*" -- "1..*" Website
+Crawler "0..*" o-- "1" DBAccess
+DBAccess "0..*" o-- "1" NLP
+D2V "0..*" o-- "1" DBAccess
+D2V "0..*" o-- "1" NLP
 @enduml
