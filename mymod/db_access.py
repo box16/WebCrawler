@@ -121,3 +121,17 @@ class DBAccess:
 
         with open(filename, "w") as f:
             json.dump(outdic, f, indent=4, ensure_ascii=False)
+
+    def get_id_interest_null(self):
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT object_id FROM interests WHERE interest IS NULL LIMIT 1;")
+            result = cursor.fetchone()
+            return result[0]
+
+    def update_interest(self, object_id, is_interest):
+        with self._connection.cursor() as cursor:
+            query_interest = "TRUE" if is_interest else "FALSE"
+            cursor.execute(
+                f"UPDATE interests SET interest={query_interest} WHERE object_id={object_id};")
+            self._connection.commit()

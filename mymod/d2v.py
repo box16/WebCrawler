@@ -26,17 +26,18 @@ class D2V:
             window=8,
             min_count=10,
             workers=4)
-        model.save("./d2v_model/d2v.model")
+        model.save("/home/pi/My_App/Web_Scrap_for_Python/d2v_model/d2v.model")
 
     def find_similer_articles(self, object_id):
         """指定したidに似ているベクトルの他記事を5つピックする"""
-        model = Doc2Vec.load('./d2v_model/d2v.model')
-        print("base : ", self._db.get_title(object_id))
+        model = Doc2Vec.load(
+            '/home/pi/My_App/Web_Scrap_for_Python/d2v_model/d2v.model')
+        results = []
         for page_id in model.docvecs.most_similar(
-                positive={object_id, }, topn=5):
+                positive={object_id, }):
             if page_id[1] > 0.7:
-                print(self._db.get_title(page_id[0]))
-        print("-------")
+                results.append(page_id[0])
+        return results
 
     def _format_for_train(self, text):
         text = re.sub(r"\n", "", text)
