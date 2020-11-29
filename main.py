@@ -1,6 +1,6 @@
-from mylib import webcraw
-from mylib import db_access
-from mylib import d2v
+from mymod import webcraw
+from mymod import db_access
+from mymod import d2v
 from define import website_define
 from time import sleep
 
@@ -9,7 +9,7 @@ if __name__ == "__main__":
     crawler = webcraw.Crawler()
     for site in web_sites:
         _website = webcraw.Website(**site)
-        crawler.start_craw(_website, 50)
+        crawler.start_craw(_website, 1)
     machine = d2v.D2V()
     machine.training()
     #db = db_access.DBAccess()

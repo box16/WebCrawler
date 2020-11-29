@@ -89,7 +89,7 @@ class Crawler:
     def start_craw(self, site: Website, deep: int = 10) -> None:
         """クロール対象の基点URLから指定回数分内部ページをコレクトする"""
 
-        assert str(type(site)) == "<class 'mylib.webcraw.Website'>"
+        assert str(type(site)) == "<class 'mymod.webcraw.Website'>"
         if (deep <= 0) or (deep >= 100):
             print("探索数が異常値のため、10回に修正します")
             deep = 10
