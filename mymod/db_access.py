@@ -3,16 +3,17 @@ import json
 import re
 import os
 import psycopg2
-from .nlp import KeyWordCollector
+from .nlp import NLP
 
 
 class DBAccess:
+    """DBへのデータ追加、データ検索を引き受けるクラス"""
+
     def __init__(self):
         self._get_connection()
-        self._key_collector = KeyWordCollector()
+        self._nlp = NLP()
 
     def _get_connection(self):
-        """DBへのコネクションを確立する"""
         try:
             database_info = os.environ.get("WEBCRAWLDB")
             self._connection = psycopg2.connect(database_info)
@@ -45,12 +46,6 @@ class DBAccess:
                 return True
 
     def _title_format(self, title):
-        """タイトル用のフォーマットを行う
-
-        先頭の空白を全て削除する\n
-        末尾の空白を全て削除する\n
-        改行を削除する\n
-        """
         title = re.sub(r"^\s*", "", title)
         title = re.sub(r"\s*$", "", title)
         title = re.sub(r"\n", "", title)
@@ -58,18 +53,12 @@ class DBAccess:
         return title
 
     def _body_format(self, body):
-        """ボディ用のフォーマットを行う
-
-        複数の改行を一つの改行に置き換える(改行の前後に空白含む物も可)\n
-        先頭の改行を削除する\n
-        """
         body = re.sub(r"(\s*\n+\s*)", "\n", body)
         body = re.sub(r"^(\s*\n\s*)", "", body)
         body = self._escape_single_quot(body)
         return body
 
     def _escape_single_quot(self, text):
-        """SQL用にシングルクォートを半角スペースにする"""
         text = re.sub(r"\'", " ", text)
         return text
 
@@ -80,7 +69,7 @@ class DBAccess:
                 "SELECT object_id,body FROM pages LEFT OUTER JOIN keywords USING (object_id) WHERE keyword IS NULL;")
             results = cursor.fetchall()
             for result in results:
-                keywords = self._key_collector.collect_keyword(result[1])
+                keywords = self._nlp.collect_keyword(result[1])
                 cursor.execute(
                     f"INSERT INTO keywords (object_id,keyword) VALUES ({result[0]},'{keywords}')")
                 self._connection.commit()
@@ -102,12 +91,14 @@ class DBAccess:
                 is_unfinished = offset < pages_num
 
     def get_all_pages_data(self):
+        """コレクトしてきたすべての記事のidと内容を渡す"""
         with self._connection.cursor() as cursor:
             cursor.execute("SELECT object_id,body FROM pages;")
             result = cursor.fetchall()
             return result
 
     def get_title(self, object_id):
+        """コレクトしてきた記事からidに紐づくtitleを渡す"""
         with self._connection.cursor() as cursor:
             cursor.execute(
                 f"SELECT title FROM pages WHERE object_id={object_id};")
@@ -115,7 +106,6 @@ class DBAccess:
             return result[0]
 
     def _write_pages_SBJson(self, data, filename):
-        """DBの情報を500個ずつSB用のJson形式で出力する(関数分割)"""
         pages = []
         for page in data:
             keywords = page[3].split("\n")

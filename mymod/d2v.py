@@ -1,16 +1,17 @@
 from gensim.models.doc2vec import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
 from .db_access import DBAccess
-from .nlp import KeyWordCollector
+from .nlp import NLP
 import re
 
 
 class D2V:
     def __init__(self):
         self._db = DBAccess()
-        self._nlp = KeyWordCollector()
+        self._nlp = NLP()
 
     def training(self):
+        """DBに保存されている記事全てを使って文章ベクトル化する"""
         documents = self._db.get_all_pages_data()
         training_data = []
         for object_id, body in documents:
@@ -28,6 +29,7 @@ class D2V:
         model.save("./d2v_model/d2v.model")
 
     def find_similer_articles(self, object_id):
+        """指定したidに似ているベクトルの他記事を5つピックする"""
         model = Doc2Vec.load('./d2v_model/d2v.model')
         print("base : ", self._db.get_title(object_id))
         for page_id in model.docvecs.most_similar(

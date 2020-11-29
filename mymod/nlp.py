@@ -3,13 +3,14 @@ import re
 import os
 
 
-class KeyWordCollector():
+class NLP():
 
     def __init__(self):
         path = os.environ.get("MECABDIC")
         self._mecab_dic = MeCab.Tagger(f'--unk-feature "unknown" -d {path}')
 
     def analyze_morphological(self, text):
+        """渡した文字列を形態素解析する"""
         node = self._prepare_analyze(text)
         result = []
         while node:
@@ -40,7 +41,6 @@ class KeyWordCollector():
         return result_text
 
     def _is_legal(self, node):
-        """単語の中から、特徴を示せるものを抽出する"""
         if node.feature == "unknown":
             return False
 
@@ -52,7 +52,6 @@ class KeyWordCollector():
         return is_noun and is_legal_word_length and is_proprietary and is_origin and not is_teki_in
 
     def _text_cleaner(self, text):
-        """単語抽出のため不要な文字を削除する"""
         text = re.sub(r'[!-~]', "", text)
         text = re.sub(r'[︰-＠]', "", text)
         text = re.sub('\n', " ", text)
