@@ -99,7 +99,6 @@ class Crawler:
 
         self._initialize(site)
         for trial in range(deep):
-            print(f"{trial+1}/{deep}")
             self._collect_domestic_pages(self._current_url)
             if not self._domestic_pages:
                 continue
