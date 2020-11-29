@@ -3,3 +3,4 @@ __pycache__
 /result_file
 postgreDB
 mecab-ipadic-neologd
+d2v_model
