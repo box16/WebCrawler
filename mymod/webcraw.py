@@ -76,7 +76,7 @@ class Crawler:
             title = self._safe_get(bs, self._site.title_tag)
             body = self._safe_get(bs, self._site.body_tag)
             if title != "" and body != "":
-                self._db_access.add_row(page, title, body)
+                self._db_access.add_page(page, title, body)
 
     def _initialize(self, site: Website) -> None:
         self._site = site

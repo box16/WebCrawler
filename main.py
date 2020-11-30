@@ -8,5 +8,7 @@ if __name__ == "__main__":
     for site in web_sites:
         _website = webcraw.Website(**site)
         crawler.start_craw(_website, 50)
+    del(web_sites)
+    del(crawler)
     machine = d2v.D2V()
     machine.training()

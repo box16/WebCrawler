@@ -12,6 +12,7 @@ class DBAccess:
     def __init__(self):
         self._get_connection()
         self._nlp = NLP()
+        self._reference_table = ["keywords", "interests"]
 
     def _get_connection(self):
         try:
@@ -20,7 +21,7 @@ class DBAccess:
         except BaseException:
             print("DB接続エラー")
 
-    def add_row(self, url, title, body):
+    def add_page(self, url, title, body):
         """渡された情報をDBに保存する
 
         DBに保存するときに文字列を整形する
@@ -33,7 +34,15 @@ class DBAccess:
             cursor.execute(
                 f"INSERT INTO pages (object_id,url,title,body) VALUES (nextval('object_id_seq'),'{url}','{title}','{body}');")
             self._connection.commit()
+            self._update_reference_table()
             print(f"add {title}")
+
+    def _update_reference_table(self):
+        with self._connection.cursor() as cursor:
+            for table in self._reference_table:
+                cursor.execute(
+                    f"INSERT INTO {table} (object_id) SELECT object_id FROM pages AS p  WHERE NOT EXISTS (SELECT 1 FROM {table} AS z WHERE p.object_id = z.object_id);")
+                self._connection.commit()
 
     def check_dueto_insert(self, url):
         """urlからデータベースにデータを挿入可能か調べる"""
