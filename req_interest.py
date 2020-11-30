@@ -11,10 +11,10 @@ if __name__ == "__main__":
         unchecked_article = _db.get_id_interest_null()
         print("base : ", _db.get_title(unchecked_article))
         _input = input("interest? yes : 1 no : other ->")
-        interest = True if _input == "1" else False
-        _db.update_interest(unchecked_article, interest)
+        change_interest = 1 if _input == "1" else -1
+        _db.update_interest(unchecked_article, change_interest)
 
-        similer_ids = _d2v.find_similer_articles(unchecked_article)
-        for _id in similer_ids:
+        similer_articles = _d2v.find_similer_articles(unchecked_article)
+        for _id, similarity in similer_articles:
             print(_db.get_title(_id))
-            _db.update_interest(_id, interest)
+            _db.update_interest(_id, change_interest * similarity)

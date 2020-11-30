@@ -134,13 +134,12 @@ class DBAccess:
     def get_id_interest_null(self):
         with self._connection.cursor() as cursor:
             cursor.execute(
-                "SELECT object_id FROM interests WHERE interest IS NULL LIMIT 1;")
+                "SELECT object_id FROM interests WHERE interest_index IS NULL LIMIT 1;")
             result = cursor.fetchone()
             return result[0]
 
-    def update_interest(self, object_id, is_interest):
+    def update_interest(self, object_id, change_interest):
         with self._connection.cursor() as cursor:
-            query_interest = "TRUE" if is_interest else "FALSE"
             cursor.execute(
-                f"UPDATE interests SET interest={query_interest} WHERE object_id={object_id};")
+                f"UPDATE interests SET interest_index=interest_index+{change_interest} WHERE object_id={object_id};")
             self._connection.commit()

@@ -32,12 +32,7 @@ class D2V:
         """指定したidに似ているベクトルの他記事を5つピックする"""
         model = Doc2Vec.load(
             '/home/pi/My_App/Web_Scrap_for_Python/d2v_model/d2v.model')
-        results = []
-        for page_id in model.docvecs.most_similar(
-                positive={object_id, }):
-            if page_id[1] > 0.7:
-                results.append(page_id[0])
-        return results
+        return model.docvecs.most_similar(positive={object_id, })
 
     def _format_for_train(self, text):
         text = re.sub(r"\n", "", text)
