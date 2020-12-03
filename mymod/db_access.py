@@ -35,7 +35,6 @@ class DBAccess:
                 f"INSERT INTO pages (object_id,url,title,body) VALUES (nextval('object_id_seq'),'{url}','{title}','{body}');")
             self._connection.commit()
             self._update_reference_table()
-            print(f"add {title}")
 
     def _update_reference_table(self):
         with self._connection.cursor() as cursor:
@@ -82,7 +81,6 @@ class DBAccess:
                 cursor.execute(
                     f"INSERT INTO keywords (object_id,keyword) VALUES ({result[0]},'{keywords}')")
                 self._connection.commit()
-                print(f"update {result[0]}")
 
     def write_pages_SBJson(self):
         """DBの情報を500個ずつSB用のJson形式で出力する"""

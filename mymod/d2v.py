@@ -3,12 +3,14 @@ from gensim.models.doc2vec import TaggedDocument
 from .db_access import DBAccess
 from .nlp import NLP
 import re
+import os
 
 
 class D2V:
     def __init__(self):
         self._db = DBAccess()
         self._nlp = NLP()
+        self.model_file = os.environ.get("D2VMODEL")
 
     def training(self):
         """DBに保存されている記事全てを使って文章ベクトル化する"""
@@ -18,7 +20,6 @@ class D2V:
             body = self._format_for_train(body)
             words = self._nlp.analyze_morphological(body)
             training_data.append(TaggedDocument(words=words, tags=[object_id]))
-        print("prepare done")
         model = Doc2Vec(
             documents=training_data,
             dm=1,
@@ -26,12 +27,11 @@ class D2V:
             window=8,
             min_count=10,
             workers=4)
-        model.save("/home/pi/My_App/Web_Scrap_for_Python/d2v_model/d2v.model")
+        model.save(self.model_file)
 
     def find_similer_articles(self, object_id):
         """指定したidに似ているベクトルの他記事を5つピックする"""
-        model = Doc2Vec.load(
-            '/home/pi/My_App/Web_Scrap_for_Python/d2v_model/d2v.model')
+        model = Doc2Vec.load(self.model_file)
         return model.docvecs.most_similar(positive={object_id, })
 
     def _format_for_train(self, text):
