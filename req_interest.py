@@ -5,11 +5,11 @@ if __name__ == "__main__":
     _db = db_access.DBAccess()
     _d2v = d2v.D2V()
     print("traing")
-    _d2v.training()
+    # _d2v.training()
     print("traing Done")
 
     while True:
-        unchecked_article = _db.get_id_interest_null()
+        unchecked_article = _db.get_id_interest_base()
         print("base : ", _db.get_title(unchecked_article))
         _input = input("interest? yes : 1 no : other ->")
         change_interest = 1 if _input == "1" else -1

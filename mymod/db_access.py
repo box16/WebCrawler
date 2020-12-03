@@ -4,6 +4,7 @@ import re
 import os
 import psycopg2
 from .nlp import NLP
+import random
 
 
 class DBAccess:
@@ -129,12 +130,12 @@ class DBAccess:
         with open(filename, "w") as f:
             json.dump(outdic, f, indent=4, ensure_ascii=False)
 
-    def get_id_interest_null(self):
+    def get_id_interest_base(self):
         with self._connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT object_id FROM interests WHERE interest_index IS NULL LIMIT 1;")
-            result = cursor.fetchone()
-            return result[0]
+            cursor.execute("SELECT count(*) FROM interests")
+            result = cursor.fetchone()[0]
+            selected_id = random.randrange(int(result)) + 1
+            return selected_id
 
     def update_interest(self, object_id, change_interest):
         with self._connection.cursor() as cursor:
