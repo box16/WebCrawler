@@ -4,4 +4,4 @@ __pycache__
 postgreDB
 mecab-ipadic-neologd
 d2v_model
-log.txt
+*.txt

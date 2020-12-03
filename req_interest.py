@@ -4,8 +4,9 @@ from mymod import db_access
 if __name__ == "__main__":
     _db = db_access.DBAccess()
     _d2v = d2v.D2V()
-
+    print("traing")
     _d2v.training()
+    print("traing Done")
 
     while True:
         unchecked_article = _db.get_id_interest_null()
@@ -16,5 +17,6 @@ if __name__ == "__main__":
 
         similer_articles = _d2v.find_similer_articles(unchecked_article)
         for _id, similarity in similer_articles:
-            print(_db.get_title(_id))
             _db.update_interest(_id, change_interest * similarity)
+
+        print()

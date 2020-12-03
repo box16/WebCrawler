@@ -14,7 +14,8 @@ class NLP():
         node = self._prepare_analyze(text)
         result = []
         while node:
-            result.append(node.surface)
+            if (node.feature.split(",")[0] == "名詞"):
+                result.append(node.surface)
             node = node.next
         return result
 

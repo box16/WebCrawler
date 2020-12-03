@@ -139,5 +139,11 @@ class DBAccess:
     def update_interest(self, object_id, change_interest):
         with self._connection.cursor() as cursor:
             cursor.execute(
-                f"UPDATE interests SET interest_index=interest_index+{change_interest} WHERE object_id={object_id};")
+                f"SELECT interest_index FROM interests WHERE object_id={object_id};")
+            if cursor.fetchone()[0]:
+                cursor.execute(
+                    f"UPDATE interests SET interest_index=interest_index+{change_interest} WHERE object_id={object_id};")
+            else:
+                cursor.execute(
+                    f"UPDATE interests SET interest_index={change_interest} WHERE object_id={object_id};")
             self._connection.commit()
