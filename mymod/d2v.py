@@ -19,8 +19,8 @@ class Corpus:
         return text
 
     def __iter__(self):
-        for index in range(self.pages_num):
-            pick = self._db.pick_pages(index, 1)
+        for offset in range(self.pages_num):
+            pick = self._db.pick_id_body_pages(offset=offset, limit=1)
             body = self._format_for_train(pick[1])
             words = self._nlp.analyze_morphological(body)
             yield TaggedDocument(words=words, tags=[pick[0]])

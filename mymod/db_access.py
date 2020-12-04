@@ -12,7 +12,6 @@ class DBAccess:
 
     def __init__(self):
         self._get_connection()
-        self._nlp = NLP()
         self._reference_table = ["keywords", "interests"]
 
     def _get_connection(self):
@@ -71,47 +70,19 @@ class DBAccess:
         text = re.sub(r"\'", " ", text)
         return text
 
-    def update_keyword(self):
-        """keyword列がNULLの物を更新する"""
-        with self._connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT object_id,body FROM pages LEFT OUTER JOIN keywords USING (object_id) WHERE keyword IS NULL;")
-            results = cursor.fetchall()
-            for result in results:
-                keywords = self._nlp.collect_keyword(result[1])
-                cursor.execute(
-                    f"INSERT INTO keywords (object_id,keyword) VALUES ({result[0]},'{keywords}')")
-                self._connection.commit()
-
     def write_pages_SBJson(self):
         """DBの情報を500個ずつSB用のJson形式で出力する"""
         with self._connection.cursor() as cursor:
-            cursor.execute("SELECT count(*) FROM pages;")
-            pages_num = cursor.fetchone()[0]
-            is_unfinished, offset, period = True, 0, 500
+            pages_num = self.get_all_pages_count()
+            is_unfinished, offset, limit = True, 0, 500
             while is_unfinished:
                 cursor.execute(
-                    f"SELECT title,body,url,keyword FROM pages INNER JOIN keywords USING (object_id) LIMIT {period} OFFSET {offset};")
+                    f"SELECT title,body,url,keyword FROM pages INNER JOIN keywords USING (object_id) LIMIT {limit} OFFSET {offset};")
                 filename = "./result_file/" + \
                     str(date.today()) + "_" + str(offset) + ".json"
                 self._write_pages_SBJson(cursor.fetchall(), filename)
-                offset += period
+                offset += limit
                 is_unfinished = offset < pages_num
-
-    def get_all_pages_data(self):
-        """コレクトしてきたすべての記事のidと内容を渡す"""
-        with self._connection.cursor() as cursor:
-            cursor.execute("SELECT object_id,body FROM pages;")
-            result = cursor.fetchall()
-            return result
-
-    def get_title(self, object_id):
-        """コレクトしてきた記事からidに紐づくtitleを渡す"""
-        with self._connection.cursor() as cursor:
-            cursor.execute(
-                f"SELECT title FROM pages WHERE object_id={object_id};")
-            result = cursor.fetchone()
-            return result[0]
 
     def _write_pages_SBJson(self, data, filename):
         pages = []
@@ -130,30 +101,49 @@ class DBAccess:
         with open(filename, "w") as f:
             json.dump(outdic, f, indent=4, ensure_ascii=False)
 
-    def get_id_interest_base(self):
+    def update_keyword(self):
+        """keyword列がNULLの物を更新する"""
         with self._connection.cursor() as cursor:
-            cursor.execute("SELECT count(*) FROM interests")
-            result = cursor.fetchone()[0]
-            selected_id = random.randrange(int(result)) + 1
-            return selected_id
+            cursor.execute(
+                "SELECT object_id,body FROM pages LEFT OUTER JOIN keywords USING (object_id) WHERE keyword IS NULL;")
+            results = cursor.fetchall()
+            nlp = NLP()
+            for result in results:
+                keywords = nlp.collect_keyword(result[1])
+                cursor.execute(
+                    f"INSERT INTO keywords (object_id,keyword) VALUES ({result[0]},'{keywords}')")
+                self._connection.commit()
+
+    def get_title_pages(self, object_id):
+        """コレクトしてきた記事からidに紐づくtitleを渡す"""
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT title FROM pages WHERE object_id={object_id};")
+            result = cursor.fetchone()
+            return result[0]
 
     def update_interest(self, object_id, change_interest):
         with self._connection.cursor() as cursor:
             cursor.execute(
                 f"SELECT interest_index FROM interests WHERE object_id={object_id};")
-            if cursor.fetchone()[0]:
-                cursor.execute(
-                    f"UPDATE interests SET interest_index=interest_index+{change_interest} WHERE object_id={object_id};")
-            else:
-                cursor.execute(
-                    f"UPDATE interests SET interest_index={change_interest} WHERE object_id={object_id};")
+            add_value = f"interest_index+{change_interest}" if cursor.fetchone()[
+                0] else f"{change_interest}"
+            cursor.execute(
+                f"UPDATE interests SET interest_index={add_value} WHERE object_id={object_id};")
             self._connection.commit()
 
-    def pick_pages(self, offset, limit):
+    def pick_id_body_pages(self, offset=None, limit=None):
         with self._connection.cursor() as cursor:
-            cursor.execute(
-                f"SELECT object_id,body FROM pages OFFSET {offset} LIMIT {limit};")
-            return cursor.fetchone()
+            q_offset = f" OFFSET {offset} " if offset else ""
+            q_limit = f" LIMIT {limit} " if limit else ""
+            query = "SELECT object_id,body FROM pages" + q_offset + q_limit + ";"
+            cursor.execute(query)
+            return cursor.fetchall()
+
+    def random_get_interest_id(self):
+        pages_num = self.get_all_pages_count()
+        selected_id = random.randrange(int(pages_num)) + 1
+        return selected_id
 
     def get_all_pages_count(self):
         with self._connection.cursor() as cursor:

@@ -9,8 +9,8 @@ if __name__ == "__main__":
     print("traing Done")
 
     while True:
-        unchecked_article = _db.get_id_interest_base()
-        print("base : ", _db.get_title(unchecked_article))
+        unchecked_article = _db.random_get_interest_id()
+        print("base : ", _db.get_title_pages(unchecked_article))
         _input = input("interest? yes : 1 no : other ->")
         change_interest = 1 if _input == "1" else -1
         _db.update_interest(unchecked_article, change_interest)
