@@ -5,7 +5,7 @@ if __name__ == "__main__":
     _db = db_access.DBAccess()
     _d2v = d2v.D2V()
     print("traing")
-    # _d2v.training()
+    _d2v.training()
     print("traing Done")
 
     while True:

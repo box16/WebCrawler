@@ -9,28 +9,21 @@ from smart_open import open
 
 class Corpus:
     def __init__(self):
-        self.corpus_path = "/home/pi/My_App/Web_Scrap_for_Python/corpus.txt"
         self._nlp = NLP()
-        documents = DBAccess().get_all_pages_data()
-        with open(self.corpus_path, "w") as f:
-            for object_id, body in documents:
-                body = self._format_for_train(body)
-                f.write(body + "," + str(object_id) + "\n")
+        self._db = DBAccess()
+        self.pages_num = self._db.get_all_pages_count()
 
     def _format_for_train(self, text):
         text = re.sub(r"\n", "", text)
         text = re.sub(r"\s", "", text)
-        text = re.sub(r",", "", text)
         return text
 
     def __iter__(self):
-        for line in open(self.corpus_path):
-            document = line.split(",")
-            words = self._nlp.analyze_morphological(document[0])
-            yield TaggedDocument(words=words, tags=[int(document[1])])
-
-    def __del__(self):
-        os.remove(self.corpus_path)
+        for index in range(self.pages_num):
+            pick = self._db.pick_pages(index, 1)
+            body = self._format_for_train(pick[1])
+            words = self._nlp.analyze_morphological(body)
+            yield TaggedDocument(words=words, tags=[pick[0]])
 
 
 class D2V:
@@ -47,6 +40,7 @@ class D2V:
             window=8,
             min_count=10,
             workers=4)
+        del(self.corpus)
         model.save(self.model_file)
         model.delete_temporary_training_data(
             keep_doctags_vectors=True, keep_inference=True)

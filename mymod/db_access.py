@@ -148,3 +148,15 @@ class DBAccess:
                 cursor.execute(
                     f"UPDATE interests SET interest_index={change_interest} WHERE object_id={object_id};")
             self._connection.commit()
+
+    def pick_pages(self, offset, limit):
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT object_id,body FROM pages OFFSET {offset} LIMIT {limit};")
+            return cursor.fetchone()
+
+    def get_all_pages_count(self):
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT count(object_id) FROM pages;")
+            return cursor.fetchone()[0]
