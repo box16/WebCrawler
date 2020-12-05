@@ -1,27 +1,36 @@
 import MeCab
 import re
 import os
+import sys
+import logging
 
 
 class NLP():
 
     def __init__(self):
-        path = os.environ.get("MECABDIC")
-        self._mecab_dic = MeCab.Tagger(f'--unk-feature "unknown" -d {path}')
+        try:
+            path = os.environ.get("MECABDIC")
+            self._mecab_dic = MeCab.Tagger(
+                f'--unk-feature "unknown" -d {path}')
+        except BaseException:
+            logging.warning("maybe... MECABDIC did not defined")
+            sys.exit()
 
     def analyze_morphological(self, text):
         """渡した文字列を形態素解析する"""
         node = self._prepare_analyze(text)
         result = []
         while node:
-            if (node.feature.split(",")[0] == "名詞"):
-                result.append(node.surface)
+            result.append(node.surface)
             node = node.next
         return result
 
     def _prepare_analyze(self, text):
         self._mecab_dic.parse("")
         text = self._text_cleaner(text)
+        if not text:
+            logging.warning("text is none")
+            return None
         node = self._mecab_dic.parseToNode(text)
         return node
 
