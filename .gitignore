@@ -5,3 +5,4 @@ postgreDB
 mecab-ipadic-neologd
 d2v_model
 *.txt
+*.log
