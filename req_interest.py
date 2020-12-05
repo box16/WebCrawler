@@ -1,7 +1,11 @@
 from mymod import d2v
 from mymod import db_access
+import logging
+import os
 
 if __name__ == "__main__":
+    log_file = os.environ.get("LOGFILE")
+    logging.basicConfig(filename=log_file, level=logging.DEBUG)
     _db = db_access.DBAccess()
     _d2v = d2v.D2V()
     print("traing")

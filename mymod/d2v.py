@@ -21,9 +21,9 @@ class Corpus:
     def __iter__(self):
         for offset in range(self.pages_num):
             pick = self._db.pick_id_body_pages(offset=offset, limit=1)
-            body = self._format_for_train(pick[1])
+            body = self._format_for_train(pick[0][1])
             words = self._nlp.analyze_morphological(body)
-            yield TaggedDocument(words=words, tags=[pick[0]])
+            yield TaggedDocument(words=words, tags=[pick[0][0]])
 
 
 class D2V:
