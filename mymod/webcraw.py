@@ -1,9 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 import random
-import datetime
 import json
 from .db_access import DBAccess
+import logging
 
 
 class Website:
@@ -46,12 +46,14 @@ class Crawler:
         try:
             req = requests.get(url)
         except requests.exceptions.RequestException:
+            logging.warning(f"requests.get error! URL : {url}")
             return None
         return BeautifulSoup(req.text, "html.parser")
 
     def _collect_domestic_pages(self, url):
         bs = self._get_page(url)
         if not bs:
+            logging.warning(f"bs is None! URL : {url}")
             return
         for link in bs.find_all("a", href=self._site.dome_char):
             if not link.attrs["href"]:
@@ -69,9 +71,10 @@ class Crawler:
     def _scrap(self):
         for page in self._domestic_pages:
             bs = self._get_page(page)
-            if bs is None:
+            if not bs:
+                logging.warning(f"bs is None! URL : {page}")
                 continue
-            if self._db_access.check_dueto_insert(page) == False:
+            if not self._db_access.check_dueto_insert(page):
                 continue
             title = self._safe_get(bs, self._site.title_tag)
             body = self._safe_get(bs, self._site.body_tag)
@@ -94,11 +97,12 @@ class Crawler:
 
         assert str(type(site)) == "<class 'mymod.webcraw.Website'>"
         if (deep <= 0) or (deep >= 100):
-            print("探索数が異常値のため、10回に修正します")
+            logging.info(f"deep num fixed 10")
             deep = 10
 
         self._initialize(site)
         for trial in range(deep):
+            logging.debug(f"{self.site.name} ... {trial}/{deep}")
             self._collect_domestic_pages(self._current_url)
             if not self._domestic_pages:
                 continue
