@@ -5,6 +5,7 @@ import os
 import psycopg2
 from .nlp import NLP
 import random
+import logging
 
 
 class DBAccess:
@@ -19,7 +20,7 @@ class DBAccess:
             database_info = os.environ.get("WEBCRAWLDB")
             self._connection = psycopg2.connect(database_info)
         except BaseException:
-            print("DB接続エラー")
+            logging.warning(f"DB connection Error!")
 
     def add_page(self, url, title, body):
         """渡された情報をDBに保存する
@@ -27,7 +28,7 @@ class DBAccess:
         DBに保存するときに文字列を整形する
         """
         with self._connection.cursor() as cursor:
-            if self.check_dueto_insert(url) == False:
+            if not self.check_dueto_insert(url):
                 return
             title = self._title_format(title)
             body = self._body_format(body)
@@ -58,12 +59,16 @@ class DBAccess:
         title = re.sub(r"\s*$", "", title)
         title = re.sub(r"\n", "", title)
         title = self._escape_single_quot(title)
+        if not title:
+            logging.info("title is None")
         return title
 
     def _body_format(self, body):
         body = re.sub(r"(\s*\n+\s*)", "\n", body)
         body = re.sub(r"^(\s*\n\s*)", "", body)
         body = self._escape_single_quot(body)
+        if not body:
+            logging.info("body is None")
         return body
 
     def _escape_single_quot(self, text):
