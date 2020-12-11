@@ -1,6 +1,6 @@
 venv
 __pycache__
-/result_file
+*.json
 postgreDB
 mecab-ipadic-neologd
 d2v_model
