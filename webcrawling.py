@@ -15,5 +15,3 @@ if __name__ == "__main__":
         _website = webcraw.Website(**site)
         crawler.start_craw(_website, 50)
 
-    del(web_sites)
-    del(crawler)
