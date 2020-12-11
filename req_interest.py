@@ -5,12 +5,9 @@ import os
 
 if __name__ == "__main__":
     log_file = os.environ.get("LOGFILE")
-    logging.basicConfig(filename=log_file, level=logging.DEBUG)
+    logging.basicConfig(filename=log_file, level=logging.WARNING)
     _db = db_access.DBAccess()
     _d2v = d2v.D2V()
-    print("traing")
-    _d2v.training()
-    print("traing Done")
 
     while True:
         unchecked_article = _db.random_get_interest_id()
@@ -21,6 +18,6 @@ if __name__ == "__main__":
 
         similer_articles = _d2v.find_similer_articles(unchecked_article)
         for _id, similarity in similer_articles:
-            _db.update_interest(_id, change_interest * similarity)
-
+            first_index = change_interest * similarity
+            _db.update_interest(_id, first_index)
         print()

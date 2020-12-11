@@ -82,7 +82,7 @@ class DBAccess:
             is_unfinished, offset, limit = True, 0, 500
             while is_unfinished:
                 cursor.execute(
-                    f"SELECT title,body,url,keyword FROM pages INNER JOIN keywords USING (object_id) LIMIT {limit} OFFSET {offset};")
+                    f"SELECT p.title,p.body,p.url,k.keyword,i.score FROM pages p INNER JOIN keywords k ON p.object_id=k.object_id INNER JOIN interest_score i ON p.object_id=i.object_id WHERE i.score > 60 LIMIT {limit} OFFSET {offset};")
                 filename = "./result_file/" + \
                     str(date.today()) + "_" + str(offset) + ".json"
                 self._write_pages_SBJson(cursor.fetchall(), filename)
@@ -92,14 +92,15 @@ class DBAccess:
     def _write_pages_SBJson(self, data, filename):
         pages = []
         for page in data:
+            if not page[3]:
+                continue
             keywords = page[3].split("\n")
             link = ""
             for key in keywords:
                 if key:
                     link += "#" + re.sub(r"\s", "_", key) + " "
-            dic = {"title": page[0],
-                   "lines": [page[0]] + page[1].split("\n") + [page[2], link],
-                   }
+            dic = {"title": page[0], "lines": [
+                page[0], "score_" + str(page[4])] + page[1].split("\n") + [page[2], link], }
             pages.append(dic)
         outdic = {"pages": pages}
 
@@ -130,11 +131,7 @@ class DBAccess:
     def update_interest(self, object_id, change_interest):
         with self._connection.cursor() as cursor:
             cursor.execute(
-                f"SELECT interest_index FROM interests WHERE object_id={object_id};")
-            add_value = f"interest_index+{change_interest}" if cursor.fetchone()[
-                0] else f"{change_interest}"
-            cursor.execute(
-                f"UPDATE interests SET interest_index={add_value} WHERE object_id={object_id};")
+                f"UPDATE interests SET interest_index=interest_index+{change_interest} WHERE object_id={object_id};")
             self._connection.commit()
 
     def pick_id_body_pages(self, offset=None, limit=None):
@@ -146,12 +143,42 @@ class DBAccess:
             return cursor.fetchall()
 
     def random_get_interest_id(self):
-        pages_num = self.get_all_pages_count()
-        selected_id = random.randrange(int(pages_num)) + 1
-        return selected_id
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT object_id FROM interests WHERE interest_index = 0 LIMIT 1;")
+            selected_id = cursor.fetchone()[0]
+            if selected_id:
+                return selected_id
+            else:
+                print("全てのページに点数がついています")
+                pages_num = self.get_all_pages_count()
+                selected_id = random.randrange(int(pages_num)) + 1
+                return selected_id
 
     def get_all_pages_count(self):
         with self._connection.cursor() as cursor:
             cursor.execute(
                 f"SELECT count(object_id) FROM pages;")
             return cursor.fetchone()[0]
+
+    def get_twenty_percent(self, top=True):
+        with self._connection.cursor() as cursor:
+            all_num = self.get_all_pages_count()
+            twenty = (all_num * 2) // 10
+            _sort = "DESC" if top else "ASC"
+            condition = "> 0" if top else "< 0"
+            cursor.execute(
+                f"SELECT object_id FROM interests WHERE interest_index {condition} ORDER BY interest_index {_sort} LIMIT {twenty};")
+            return cursor.fetchall()
+
+    def pick_body(self, object_id):
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT body FROM pages WHERE object_id = {object_id};")
+            return cursor.fetchone()[0]
+
+    def update_interest_score(self, object_id, score):
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                f"UPDATE interest_score SET score={score} WHERE object_id = {object_id};")
+            self._connection.commit()

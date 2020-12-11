@@ -48,4 +48,4 @@ class D2V:
     def find_similer_articles(self, object_id):
         """指定したidに似ているベクトルの他記事を5つピックする"""
         model = Doc2Vec.load(self.model_file)
-        return model.docvecs.most_similar(positive={object_id, })
+        return model.docvecs.most_similar(positive={object_id, }, topn=1000)
