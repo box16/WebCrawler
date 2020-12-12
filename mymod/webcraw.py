@@ -39,10 +39,7 @@ class Crawler:
     """指定したWebページから内部ページを抽出し、DBに保存するクラス"""
 
     def __init__(self):
-        self._site = None
         self._current_url = None
-        self._db_access = DBAccess()
-        self._find_interest = FindInterest()
         self._domestic_pages = []
 
     def _get_page(self, url):
@@ -53,7 +50,7 @@ class Crawler:
             return None
         return BeautifulSoup(req.text, "html.parser")
 
-    def _collect_domestic_pages(self, url,site,page_list):
+    def _collect_domestic_pages(self, url,site,url_list):
         bs = self._get_page(url)
         if not bs:
             logging.warning(f"bs is None! URL : {url}")
@@ -61,36 +58,33 @@ class Crawler:
         for link in bs.find_all("a", href=site.dome_char):
             if not link.attrs["href"]:
                 continue
-            domestic_page = site.dome_page(link.attrs["href"])
-            domestic_page = re.sub(r"/$", "", domestic_page)
-            if domestic_page in page_list:
+            other_url = site.dome_page(link.attrs["href"])
+            other_url = re.sub(r"/$", "", other_url)
+            if other_url in url_list:
                 continue
-            page_list.append(domestic_page)
-        return page_list
+            url_list.append(other_url)
+        return url_list
 
     def _safe_get(self, page_obj, selector):
         selected_elems = page_obj.select(selector)
         if (selected_elems is not None) and (len(selected_elems) > 0):
             return '\n'.join([elem.get_text() for elem in selected_elems])
 
-    """引数化 domestic_pages db_access find_interest site
-       返り url title bodyの3つで構成されるオブジェクト集"""
-    def _scrap(self):
-        for page in self._domestic_pages:
-            bs = self._get_page(page)
+    def _scrap(self,url_list,site):
+        result_pages = []
+        for url in url_list:
+            bs = self._get_page(url)
             if not bs:
-                logging.warning(f"bs is None! URL : {page}")
+                logging.warning(f"bs is None! URL : {url}")
                 continue
-            if not self._db_access.check_dueto_insert(page):
-                continue
-            body = self._safe_get(bs, self._site.body_tag)
-            score = self._find_interest.scored_interest_index(body)
-            if score < 60:
-                continue
-            title = self._safe_get(bs, self._site.title_tag)
+            body = self._safe_get(bs, site.body_tag)
+            title = self._safe_get(bs, site.title_tag)
             if title != "" and body != "":
-                self._db_access.add_page(page, title, body)
-
+                page_info = {"url" : url,
+                             "title" : title,
+                             "body" : body,}
+                result_pages.append(page_info)
+        return result_pages
 
     """引数化 site _current_url
        返り _scrapで得られるもの"""
