@@ -39,8 +39,7 @@ class Crawler:
     """指定したWebページから内部ページを抽出し、DBに保存するクラス"""
 
     def __init__(self):
-        self._current_url = None
-        self._domestic_pages = []
+        pass
 
     def _get_page(self, url):
         try:
@@ -50,15 +49,15 @@ class Crawler:
             return None
         return BeautifulSoup(req.text, "html.parser")
 
-    def _collect_domestic_pages(self, site=None, url=None, url_list=[]):
+    def _collect_domestic_pages(self, url=None, url_list=[], extractor=None , url_maker=None):
         bs = self._get_page(url)
         if not bs:
             logging.warning(f"bs is None! URL : {url}")
             return
-        for link in bs.find_all("a", href=site.dome_char):
+        for link in bs.find_all("a", href=extractor):
             if not link.attrs["href"]:
                 continue
-            other_url = site.dome_page(link.attrs["href"])
+            other_url = url_maker(link.attrs["href"])
             other_url = re.sub(r"/$", "", other_url)
             if other_url in url_list:
                 continue
