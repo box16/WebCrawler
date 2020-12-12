@@ -13,7 +13,7 @@ class DBAccess:
 
     def __init__(self):
         self._get_connection()
-        self._reference_table = ["keywords", "interests"]
+        self._reference_table = ["keywords", "interests","interest_score"]
 
     def _get_connection(self):
         try:
@@ -60,7 +60,7 @@ class DBAccess:
         title = re.sub(r"\n", "", title)
         title = self._escape_single_quot(title)
         if not title:
-            logging.info("title is None")
+            logging.warning("title is None")
         return title
 
     def _body_format(self, body):
@@ -68,7 +68,7 @@ class DBAccess:
         body = re.sub(r"^(\s*\n\s*)", "", body)
         body = self._escape_single_quot(body)
         if not body:
-            logging.info("body is None")
+            logging.warning("body is None")
         return body
 
     def _escape_single_quot(self, text):
@@ -79,7 +79,7 @@ class DBAccess:
         """DBの情報を500個ずつSB用のJson形式で出力する"""
         with self._connection.cursor() as cursor:
             pages_num = self.get_all_pages_count()
-            is_unfinished, offset, limit = True, 0, 500
+            is_unfinished, offset, limit = True, 0, 2000
             while is_unfinished:
                 cursor.execute(
                     f"SELECT p.title,p.body,p.url,k.keyword,i.score FROM pages p INNER JOIN keywords k ON p.object_id=k.object_id INNER JOIN interest_score i ON p.object_id=i.object_id WHERE i.score > 60 LIMIT {limit} OFFSET {offset};")
@@ -108,16 +108,15 @@ class DBAccess:
             json.dump(outdic, f, indent=4, ensure_ascii=False)
 
     def update_keyword(self):
-        """keyword列がNULLの物を更新する"""
+        """keywordテーブルを更新する"""
         with self._connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT object_id,body FROM pages LEFT OUTER JOIN keywords USING (object_id) WHERE keyword IS NULL;")
-            results = cursor.fetchall()
+            all_pages = self.get_all_pages_count()
             nlp = NLP()
-            for result in results:
-                keywords = nlp.collect_keyword(result[1])
+            for index in range(all_pages):
+                pick = self.pick_id_body_pages(limit=1,offset=index)
+                mors = nlp.collect_keyword(pick[0][1])
                 cursor.execute(
-                    f"INSERT INTO keywords (object_id,keyword) VALUES ({result[0]},'{keywords}')")
+                    f"UPDATE keywords SET (object_id,keyword) = ({pick[0][0]},'{mors}');")
                 self._connection.commit()
 
     def get_title_pages(self, object_id):

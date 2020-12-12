@@ -2,7 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import random
 import json
+import re
 from .db_access import DBAccess
+from .find_interest import FindInterest
 import logging
 
 
@@ -40,6 +42,7 @@ class Crawler:
         self._site = None
         self._current_url = None
         self._db_access = DBAccess()
+        self._find_interest = FindInterest()
         self._domestic_pages = []
 
     def _get_page(self, url):
@@ -59,6 +62,7 @@ class Crawler:
             if not link.attrs["href"]:
                 continue
             domestic_page = self._site.dome_page(link.attrs["href"])
+            domestic_page = re.sub(r"/$", "", domestic_page)
             if domestic_page in self._domestic_pages:
                 continue
             self._domestic_pages.append(domestic_page)
@@ -76,8 +80,11 @@ class Crawler:
                 continue
             if not self._db_access.check_dueto_insert(page):
                 continue
-            title = self._safe_get(bs, self._site.title_tag)
             body = self._safe_get(bs, self._site.body_tag)
+            score = self._find_interest.scored_interest_index(body)
+            if score < 60:
+                continue
+            title = self._safe_get(bs, self._site.title_tag)
             if title != "" and body != "":
                 self._db_access.add_page(page, title, body)
 
@@ -97,12 +104,10 @@ class Crawler:
 
         assert str(type(site)) == "<class 'mymod.webcraw.Website'>"
         if (deep <= 0) or (deep >= 100):
-            logging.info(f"deep num fixed 10")
             deep = 10
 
         self._initialize(site)
         for trial in range(deep):
-            logging.debug(f"{self._site.name} ... {trial}/{deep}")
             self._collect_domestic_pages(self._current_url)
             if not self._domestic_pages:
                 continue

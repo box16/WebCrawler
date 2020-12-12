@@ -21,7 +21,8 @@ class NLP():
         node = self._prepare_analyze(text)
         result = []
         while node:
-            result.append(node.surface)
+            if self._is_legal_soft(node):
+                result.append(node.surface)
             node = node.next
         return result
 
@@ -50,6 +51,14 @@ class NLP():
             result_text += noun + "\n"
         return result_text
 
+    def _is_legal_soft(self, node):
+        if node.feature == "unknown":
+            return False
+
+        is_noun = (node.feature.split(",")[0] == "名詞")
+        is_origin = (node.surface == node.feature.split(",")[6])
+        return is_noun and is_origin
+
     def _is_legal(self, node):
         if node.feature == "unknown":
             return False
@@ -62,7 +71,11 @@ class NLP():
         return is_noun and is_legal_word_length and is_proprietary and is_origin and not is_teki_in
 
     def _text_cleaner(self, text):
-        text = re.sub(r'[!-~]', "", text)
-        text = re.sub(r'[︰-＠]', "", text)
-        text = re.sub('\n', " ", text)
+        try :
+            text = re.sub(r'[!-~]', "", text)
+            text = re.sub(r'[︰-＠]', "", text)
+            text = re.sub('\n', " ", text)
+        except TypeError:
+            logging.warning(f"text clean Error {text}")
+            return None
         return text
