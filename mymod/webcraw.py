@@ -50,7 +50,7 @@ class Crawler:
             return None
         return BeautifulSoup(req.text, "html.parser")
 
-    def _collect_domestic_pages(self, url,site,url_list):
+    def _collect_domestic_pages(self, site=None, url=None, url_list=[]):
         bs = self._get_page(url)
         if not bs:
             logging.warning(f"bs is None! URL : {url}")
@@ -63,14 +63,13 @@ class Crawler:
             if other_url in url_list:
                 continue
             url_list.append(other_url)
-        return url_list
 
     def _safe_get(self, page_obj, selector):
         selected_elems = page_obj.select(selector)
         if (selected_elems is not None) and (len(selected_elems) > 0):
             return '\n'.join([elem.get_text() for elem in selected_elems])
 
-    def _scrap(self,url_list,site):
+    def _scrap(self,site=None,url_list=[]):
         result_pages = []
         for url in url_list:
             bs = self._get_page(url)
@@ -86,8 +85,6 @@ class Crawler:
                 result_pages.append(page_info)
         return result_pages
 
-    """引数化 site _current_url
-       返り _scrapで得られるもの"""
     def start_craw(self, site, deep = 10):
         """クロール対象から指定回数分内部ページをコレクトし、DBに保存する
 
@@ -101,11 +98,14 @@ class Crawler:
         if (deep <= 0) or (deep >= 100):
             deep = 10
 
+        url_list = []
+        current_url = site.domain
         trial = 0
         while trial < deep:
-            self._collect_domestic_pages(self._current_url)
-            if not self._domestic_pages:
+            self._collect_domestic_pages(site=site, url=current_url, url_list=url_list)
+            if not url_list:
                 continue
-            self._current_url = random.choice(self._domestic_pages)
+            current_url = random.choice(url_list)
             trial += 1
-        self._scrap()
+        result_pages = self._scrap(site=site,url_list=url_list)
+        return result_pages
