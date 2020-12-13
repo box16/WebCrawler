@@ -13,8 +13,8 @@ class Website:
 
     name         クロール対象のWebサイト名\n
     domain       クロール対象のWebサイトの基点となるURL\n
-    title_tag    クロール対象に特有のページタイトルを抽出するためのCSSコレクタ\n
-    body_tag     クロール対象に特有の内容を抽出するためのCSSコレクタ\n
+    title_selector    クロール対象に特有のページタイトルを抽出するためのCSSコレクタ\n
+    body_selector     クロール対象に特有の内容を抽出するためのCSSコレクタ\n
     extractor    クロール対象の内部ページへのリンクを抽出するための正規表現オブジェクト\n
     url_maker    クロール対象の内部ページへのリンクを作成するためのラムダ式\n
     """
@@ -23,14 +23,14 @@ class Website:
             self,
             name,
             domain,
-            title_tag,
-            body_tag,
+            title_selector,
+            body_selector,
             extractor,
             url_maker):
         self.name = name
         self.domain = domain
-        self.title_tag = title_tag
-        self.body_tag = body_tag
+        self.title_selector = title_selector
+        self.body_selector = body_selector
         self.extractor = extractor
         self.url_maker = url_maker
 
@@ -55,38 +55,46 @@ class Crawler:
             url_list=[],
             extractor=None,
             url_maker=None):
-        bs = self._get_page(url)
-        if not bs:
-            logging.warning(f"bs is None! URL : {url}")
+        bs_object = self._get_page(url)
+        if not bs_object:
+            logging.warning(f"bs_object is None! URL : {url}")
             return
-        for link in bs.find_all("a", href=extractor):
+        
+        for link in bs_object.find_all("a", href=extractor):
             if not link.attrs["href"]:
                 continue
+        
             other_url = url_maker(link.attrs["href"])
             other_url = re.sub(r"/$", "", other_url)
+        
             if other_url in url_list:
                 continue
+        
             url_list.append(other_url)
 
-    def _safe_get(self, page_obj, selector):
-        selected_elems = page_obj.select(selector)
+    def _safe_get(self, bs_object, selector):
+        selected_elems = bs_object.select(selector)
         if (selected_elems is not None) and (len(selected_elems) > 0):
             return '\n'.join([elem.get_text() for elem in selected_elems])
 
-    def _scrap(self, url_list=[], body_tag=None, title_tag=None):
+    def _scrap(self, url_list=[], body_selector=None, title_selector=None):
         result_pages = []
+        
         for url in url_list:
-            bs = self._get_page(url)
-            if not bs:
-                logging.warning(f"bs is None! URL : {url}")
+            bs_object = self._get_page(url)
+            if not bs_object:
+                logging.warning(f"bs_object is None! URL : {url}")
                 continue
-            body = self._safe_get(bs, body_tag)
-            title = self._safe_get(bs, title_tag)
+        
+            body = self._safe_get(bs_object, body_selector)
+            title = self._safe_get(bs_object, title_selector)
+        
             if title != "" and body != "":
                 page_info = {"url": url,
                              "title": title,
                              "body": body, }
                 result_pages.append(page_info)
+        
         return result_pages
 
     def start_craw(self, site, deep=10):
@@ -112,12 +120,16 @@ class Crawler:
                 url_list=url_list,
                 extractor=site.extractor,
                 url_maker=site.url_maker)
+            
             if not url_list:
                 continue
+            
             current_url = random.choice(url_list)
             trial += 1
+        
         result_pages = self._scrap(
             url_list=url_list,
-            body_tag=site.body_tag,
-            title_tag=site.title_tag)
+            body_selector=site.body_selector,
+            title_selector=site.title_selector)
+        
         return result_pages
