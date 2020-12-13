@@ -15,8 +15,8 @@ class Website:
     domain       クロール対象のWebサイトの基点となるURL\n
     title_tag    クロール対象に特有のページタイトルを抽出するためのCSSコレクタ\n
     body_tag     クロール対象に特有の内容を抽出するためのCSSコレクタ\n
-    dome_char    クロール対象の内部ページへのリンクを抽出するための正規表現オブジェクト\n
-    dome_page    クロール対象の内部ページへのリンクを作成するためのラムダ式\n
+    extractor    クロール対象の内部ページへのリンクを抽出するための正規表現オブジェクト\n
+    url_maker    クロール対象の内部ページへのリンクを作成するためのラムダ式\n
     """
 
     def __init__(
@@ -25,14 +25,14 @@ class Website:
             domain,
             title_tag,
             body_tag,
-            dome_char,
-            dome_page):
+            extractor,
+            url_maker):
         self.name = name
         self.domain = domain
         self.title_tag = title_tag
         self.body_tag = body_tag
-        self.dome_char = dome_char
-        self.dome_page = dome_page
+        self.extractor = extractor
+        self.url_maker = url_maker
 
 
 class Crawler:
@@ -49,7 +49,12 @@ class Crawler:
             return None
         return BeautifulSoup(req.text, "html.parser")
 
-    def _collect_domestic_pages(self, url=None, url_list=[], extractor=None , url_maker=None):
+    def _collect_domestic_pages(
+            self,
+            url=None,
+            url_list=[],
+            extractor=None,
+            url_maker=None):
         bs = self._get_page(url)
         if not bs:
             logging.warning(f"bs is None! URL : {url}")
@@ -68,23 +73,23 @@ class Crawler:
         if (selected_elems is not None) and (len(selected_elems) > 0):
             return '\n'.join([elem.get_text() for elem in selected_elems])
 
-    def _scrap(self,site=None,url_list=[]):
+    def _scrap(self, url_list=[], body_tag=None, title_tag=None):
         result_pages = []
         for url in url_list:
             bs = self._get_page(url)
             if not bs:
                 logging.warning(f"bs is None! URL : {url}")
                 continue
-            body = self._safe_get(bs, site.body_tag)
-            title = self._safe_get(bs, site.title_tag)
+            body = self._safe_get(bs, body_tag)
+            title = self._safe_get(bs, title_tag)
             if title != "" and body != "":
-                page_info = {"url" : url,
-                             "title" : title,
-                             "body" : body,}
+                page_info = {"url": url,
+                             "title": title,
+                             "body": body, }
                 result_pages.append(page_info)
         return result_pages
 
-    def start_craw(self, site, deep = 10):
+    def start_craw(self, site, deep=10):
         """クロール対象から指定回数分内部ページをコレクトし、DBに保存する
 
         基点URL内の内部リンクを全部抽出する\n
@@ -100,11 +105,19 @@ class Crawler:
         url_list = []
         current_url = site.domain
         trial = 0
+
         while trial < deep:
-            self._collect_domestic_pages(site=site, url=current_url, url_list=url_list)
+            self._collect_domestic_pages(
+                url=current_url,
+                url_list=url_list,
+                extractor=site.extractor,
+                url_maker=site.url_maker)
             if not url_list:
                 continue
             current_url = random.choice(url_list)
             trial += 1
-        result_pages = self._scrap(site=site,url_list=url_list)
+        result_pages = self._scrap(
+            url_list=url_list,
+            body_tag=site.body_tag,
+            title_tag=site.title_tag)
         return result_pages
