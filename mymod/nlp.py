@@ -71,7 +71,7 @@ class NLP():
         return is_noun and is_legal_word_length and is_proprietary and is_origin and not is_teki_in
 
     def _text_cleaner(self, text):
-        try :
+        try:
             text = re.sub(r'[!-~]', "", text)
             text = re.sub(r'[︰-＠]', "", text)
             text = re.sub('\n', " ", text)

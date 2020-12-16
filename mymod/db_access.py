@@ -13,7 +13,7 @@ class DBAccess:
 
     def __init__(self):
         self._get_connection()
-        self._reference_table = ["keywords", "interests","interest_score"]
+        self._reference_table = ["keywords", "interests", "interest_score"]
 
     def _get_connection(self):
         try:
@@ -113,7 +113,7 @@ class DBAccess:
             all_pages = self.get_all_pages_count()
             nlp = NLP()
             for index in range(all_pages):
-                pick = self.pick_id_body_pages(limit=1,offset=index)
+                pick = self.pick_id_body_pages(limit=1, offset=index)
                 mors = nlp.collect_keyword(pick[0][1])
                 cursor.execute(
                     f"UPDATE keywords SET (object_id,keyword) = ({pick[0][0]},'{mors}');")
