@@ -1,10 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import random
-import json
 import re
-from .db_access import DBAccess
-from .find_interest import FindInterest
 import logging
 
 
@@ -41,7 +38,7 @@ class Crawler:
     def __init__(self):
         pass
 
-    def _get_page(self, url):
+    def _get_page(self, url=None):
         try:
             req = requests.get(url)
         except requests.exceptions.RequestException:
@@ -59,45 +56,44 @@ class Crawler:
         if not bs_object:
             logging.warning(f"bs_object is None! URL : {url}")
             return
-        
+
         for link in bs_object.find_all("a", href=extractor):
             if not link.attrs["href"]:
                 continue
-        
+
             other_url = url_maker(link.attrs["href"])
             other_url = re.sub(r"/$", "", other_url)
-        
             if other_url in url_list:
                 continue
-        
+
             url_list.append(other_url)
 
-    def _safe_get(self, bs_object, selector):
+    def _safe_get(self, bs_object=None, selector=None):
         selected_elems = bs_object.select(selector)
         if (selected_elems is not None) and (len(selected_elems) > 0):
             return '\n'.join([elem.get_text() for elem in selected_elems])
 
     def _scrap(self, url_list=[], body_selector=None, title_selector=None):
         result_pages = []
-        
+
         for url in url_list:
             bs_object = self._get_page(url)
             if not bs_object:
                 logging.warning(f"bs_object is None! URL : {url}")
                 continue
-        
+
             body = self._safe_get(bs_object, body_selector)
             title = self._safe_get(bs_object, title_selector)
-        
+
             if title != "" and body != "":
                 page_info = {"url": url,
                              "title": title,
                              "body": body, }
                 result_pages.append(page_info)
-        
+
         return result_pages
 
-    def start_craw(self, site, deep=10):
+    def start_craw(self, site=None, deep=10):
         """クロール対象から指定回数分内部ページをコレクトし、DBに保存する
 
         基点URL内の内部リンクを全部抽出する\n
@@ -120,16 +116,16 @@ class Crawler:
                 url_list=url_list,
                 extractor=site.extractor,
                 url_maker=site.url_maker)
-            
+
             if not url_list:
                 continue
-            
+
             current_url = random.choice(url_list)
             trial += 1
-        
+
         result_pages = self._scrap(
             url_list=url_list,
             body_selector=site.body_selector,
             title_selector=site.title_selector)
-        
+
         return result_pages
